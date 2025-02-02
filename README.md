@@ -1,6 +1,4 @@
 ```
-- Script ESP com botão de ativação/desativação e efeito RGB
-
 local players = game:GetService("Players")
 local runService = game:GetService("RunService")
 local camera = game.Workspace.CurrentCamera
@@ -48,6 +46,7 @@ local function updateLines()
     end
 end
 
+-- Função para criar o botão com efeito RGB
 local function createToggleButton()
     local screenGui = Instance.new("ScreenGui")
     local button = Instance.new("TextButton")
@@ -88,4 +87,5 @@ players.PlayerAdded:Connect(function(player)
 end)
 
 players.PlayerRemoving:Connect(updateLines)
+
 ```
