@@ -1,50 +1,47 @@
 ```
 local players = game:GetService("Players")
 local runService = game:GetService("RunService")
-local camera = game.Workspace.CurrentCamera
-local userInputService = game:GetService("UserInputService")
-local tweenService = game:GetService("TweenService")
 
 local localPlayer = players.LocalPlayer
 local espEnabled = true
-local lines = {}
 
-local function createLine()
-    local line = Instance.new("Part")
-    line.Anchored = true
-    line.CanCollide = false
-    line.Transparency = 0.5
-    line.Color = Color3.fromRGB(255, 0, 0)
-    line.Material = Enum.Material.Neon
-    line.Size = Vector3.new(0.1, 0.1, 0.1)
-    line.Parent = workspace
-    return line
+local function highlightPlayer(player, color)
+    local highlight = player.Character:FindFirstChildOfClass("Highlight")
+    if not highlight then
+        highlight = Instance.new("Highlight")
+        highlight.Parent = player.Character
+        highlight.Adornee = player.Character
+    end
+    highlight.FillColor = color
+    highlight.FillTransparency = 0.5
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.OutlineTransparency = 0.5
 end
 
-local function updateLines()
-    for _, line in pairs(lines) do
-        line:Destroy()
-    end
-    lines = {}
-
-    if espEnabled then
-        for _, player in pairs(players:GetPlayers()) do
-            if player ~= localPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local line = createLine()
-                table.insert(lines, line)
-
-                local localHRP = localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart")
-                local targetHRP = player.Character:FindFirstChild("HumanoidRootPart")
-                
-                if localHRP and targetHRP then
-                    local distance = (localHRP.Position - targetHRP.Position).magnitude
-                    line.Size = Vector3.new(0.1, 0.1, distance)
-                    line.CFrame = CFrame.new(localHRP.Position, targetHRP.Position) * CFrame.new(0, 0, -distance / 2)
+local function updateESP()
+    for _, player in pairs(players:GetPlayers()) do
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            if player.Backpack:FindFirstChild("Knife") or player.Character:FindFirstChild("Knife") then
+                highlightPlayer(player, Color3.fromRGB(255, 0, 0)) -- Assassino em vermelho
+            elseif player.Backpack:FindFirstChild("Gun") or player.Character:FindFirstChild("Gun") then
+                highlightPlayer(player, Color3.fromRGB(0, 0, 255)) -- Xerife em azul
+            else
+                local highlight = player.Character:FindFirstChildOfClass("Highlight")
+                if highlight then
+                    highlight:Destroy()
                 end
             end
         end
     end
 end
+
+runService.RenderStepped:Connect(updateESP)
+
+players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(updateESP)
+end)
+
+players.PlayerRemoving:Connect(updateESP)
 
 -- Função para criar o botão com efeito RGB
 local function createToggleButton()
@@ -75,17 +72,19 @@ local function createToggleButton()
 
     button.MouseButton1Click:Connect(function()
         espEnabled = not espEnabled
-        updateLines()
+        if espEnabled then
+            runService.RenderStepped:Connect(updateESP)
+        else
+            for _, player in pairs(players:GetPlayers()) do
+                local highlight = player.Character:FindFirstChildOfClass("Highlight")
+                if highlight then
+                    highlight:Destroy()
+                end
+            end
+        end
     end)
 end
 
 createToggleButton()
-runService.RenderStepped:Connect(updateLines)
-
-players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(updateLines)
-end)
-
-players.PlayerRemoving:Connect(updateLines)
 
 ```
