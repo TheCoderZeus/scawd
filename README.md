@@ -1,34 +1,49 @@
+```
 local players = game:GetService("Players")
 local runService = game:GetService("RunService")
 
 local localPlayer = players.LocalPlayer
-local espEnabled = true
+local espEnabled = false
 
 local function highlightPlayer(player, color)
-    local highlight = player.Character:FindFirstChildOfClass("Highlight")
-    if not highlight then
-        highlight = Instance.new("Highlight")
-        highlight.Parent = player.Character
-        highlight.Adornee = player.Character
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local highlight = player.Character:FindFirstChildOfClass("Highlight")
+        if not highlight then
+            highlight = Instance.new("Highlight")
+            highlight.Parent = player.Character
+            highlight.Adornee = player.Character
+        end
+        highlight.FillColor = color
+        highlight.FillTransparency = 0.5
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.OutlineTransparency = 0.5
     end
-    highlight.FillColor = color
-    highlight.FillTransparency = 0.5
-    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-    highlight.OutlineTransparency = 0.5
 end
 
 local function updateESP()
-    for _, player in pairs(players:GetPlayers()) do
-        if player.Character and player.Character:FindFirstChild("Humanoid") then
-            if player.Backpack:FindFirstChild("Knife") or player.Character:FindFirstChild("Knife") then
-                highlightPlayer(player, Color3.fromRGB(255, 0, 0)) -- Assassino em vermelho
-            elseif player.Backpack:FindFirstChild("Gun") or player.Character:FindFirstChild("Gun") then
-                highlightPlayer(player, Color3.fromRGB(0, 0, 255)) -- Xerife em azul
-            else
-                local highlight = player.Character:FindFirstChildOfClass("Highlight")
-                if highlight then
-                    highlight:Destroy()
+    if espEnabled then
+        for _, player in pairs(players:GetPlayers()) do
+            if player.Character and player.Character:FindFirstChild("Humanoid") then
+                local isMurderer = player.Backpack:FindFirstChild("Knife") or player.Character:FindFirstChild("Knife")
+                local isSheriff = player.Backpack:FindFirstChild("Gun") or player.Character:FindFirstChild("Gun")
+                
+                if isMurderer then
+                    highlightPlayer(player, Color3.fromRGB(255, 0, 0)) -- Assassino em vermelho
+                elseif isSheriff then
+                    highlightPlayer(player, Color3.fromRGB(0, 0, 255)) -- Xerife em azul
+                else
+                    local highlight = player.Character:FindFirstChildOfClass("Highlight")
+                    if highlight then
+                        highlight:Destroy()
+                    end
                 end
+            end
+        end
+    else
+        for _, player in pairs(players:GetPlayers()) do
+            local highlight = player.Character:FindFirstChildOfClass("Highlight")
+            if highlight then
+                highlight:Destroy()
             end
         end
     end
@@ -42,57 +57,82 @@ end)
 
 players.PlayerRemoving:Connect(updateESP)
 
-- Função para criar o botão com efeito RGB
-local function createToggleButton()
+-- Função para criar o menu de ativação/desativação do ESP
+local function createToggleMenu()
     local screenGui = Instance.new("ScreenGui")
-    local button = Instance.new("TextButton")
+    local frame = Instance.new("Frame")
     local textLabel = Instance.new("TextLabel")
+    local toggleButton = Instance.new("TextButton")
+    local openMenuButton = Instance.new("TextButton")
+    local uiCorner = Instance.new("UICorner")
+    local uiStroke = Instance.new("UIStroke")
 
     screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     screenGui.Name = "ESPToggleGui"
 
-    button.Size = UDim2.new(0, 200, 0, 50)
-    button.Position = UDim2.new(0.5, -100, 0.9, -25)
-    button.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    button.Text = "Toggle ESP"
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.Font = Enum.Font.SourceSans
-    button.TextSize = 24
-    button.Parent = screenGui
+    frame.Size = UDim2.new(0, 250, 0, 150)
+    frame.Position = UDim2.new(0.5, -125, 0.5, -75)
+    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    frame.BackgroundTransparency = 0.1
+    frame.Visible = false
+    frame.Parent = screenGui
 
-    -- Efeito RGB
-    local hue = 0
-    runService.RenderStepped:Connect(function()
-        hue = hue + 0.01
-        if hue > 1 then
-            hue = 0
-        end
-        button.BackgroundColor3 = Color3.fromHSV(hue, 1, 1)
-    end)
+    uiCorner.CornerRadius = UDim.new(0, 10)
+    uiCorner.Parent = frame
 
-    -- Mensagem de status
-    textLabel.Size = UDim2.new(0, 400, 0, 50)
-    textLabel.Position = UDim2.new(0.5, -200, 0.8, -25)
-    textLabel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    uiStroke.Color = Color3.fromRGB(255, 255, 255)
+    uiStroke.Thickness = 2
+    uiStroke.Parent = frame
+
+    textLabel.Size = UDim2.new(1, 0, 0.4, 0)
+    textLabel.Position = UDim2.new(0, 0, 0, 0)
+    textLabel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    textLabel.BackgroundTransparency = 1
     textLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     textLabel.Font = Enum.Font.SourceSans
     textLabel.TextSize = 24
-    textLabel.Text = "ESP Ativado"
-    textLabel.Visible = false
-    textLabel.Parent = screenGui
+    textLabel.Text = "ESP Menu"
+    textLabel.Parent = frame
 
-    button.MouseButton1Click:Connect(function()
+    toggleButton.Size = UDim2.new(0.8, 0, 0.3, 0)
+    toggleButton.Position = UDim2.new(0.1, 0, 0.6, 0)
+    toggleButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    toggleButton.Text = "Ativar ESP"
+    toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleButton.Font = Enum.Font.SourceSans
+    toggleButton.TextSize = 24
+    toggleButton.Parent = frame
+
+    uiCorner:Clone().Parent = toggleButton
+    uiStroke:Clone().Parent = toggleButton
+
+    toggleButton.MouseButton1Click:Connect(function()
         espEnabled = not espEnabled
-        updateESP()
-        textLabel.Visible = true
         if espEnabled then
-            textLabel.Text = "ESP Ativado"
+            toggleButton.Text = "Desativar ESP"
         else
-            textLabel.Text = "ESP Desativado"
+            toggleButton.Text = "Ativar ESP"
         end
-        wait(2) -- A mensagem será exibida por 2 segundos
-        textLabel.Visible = false
+        updateESP()
+    end)
+
+    -- Botão para abrir o menu
+    openMenuButton.Size = UDim2.new(0, 100, 0, 50)
+    openMenuButton.Position = UDim2.new(0, 10, 0, 10)
+    openMenuButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    openMenuButton.Text = "Menu"
+    openMenuButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    openMenuButton.Font = Enum.Font.SourceSans
+    openMenuButton.TextSize = 24
+    openMenuButton.Parent = screenGui
+
+    uiCorner:Clone().Parent = openMenuButton
+    uiStroke:Clone().Parent = openMenuButton
+
+    openMenuButton.MouseButton1Click:Connect(function()
+        frame.Visible = not frame.Visible
     end)
 end
 
-createToggleButton()
+createToggleMenu()
+```
