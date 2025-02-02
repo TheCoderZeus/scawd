@@ -1,3 +1,4 @@
+```
 - Script ESP com botão de ativação/desativação e efeito RGB
 
 local players = game:GetService("Players")
@@ -87,3 +88,4 @@ players.PlayerAdded:Connect(function(player)
 end)
 
 players.PlayerRemoving:Connect(updateLines)
+```
